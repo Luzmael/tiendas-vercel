@@ -1174,9 +1174,12 @@ async function loadProducts() {
     try {
         await getAppSettings();
         
-        const { data, error } = await fetch('/api/products').then(res => res.json());
+        const response = await fetch('/api/products');
+        const data = await response.json();
         
-        if (error) throw error;
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load products');
+        }
         
         if (data && data.length > 0) {
             return {
@@ -1186,7 +1189,7 @@ async function loadProducts() {
                     description: product.description || '',
                     price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
                     originalPrice: product.price || '$0.00',
-                    priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0,
+                    priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
                     image: product.image || 'https://via.placeholder.com/500',
                     images: product.images || [],
                     video: product.video || '',
