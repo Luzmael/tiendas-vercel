@@ -1169,43 +1169,54 @@ function getYouTubeEmbedUrl(url) {
         : url;
 }
 
-// Función para cargar productos
 async function loadProducts() {
     try {
         await getAppSettings();
         
         const response = await fetch('/api/products');
+        
+        // Verificar si la respuesta es exitosa
         if (!response.ok) {
-            throw new Error('Error al cargar productos');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
         
-        if (data && data.length > 0) {
-            return {
-                products: data.map(product => ({
-                    id: product.id,
-                    name: product.name || 'Unnamed Product',
-                    description: product.description || '',
-                    price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
-                    originalPrice: product.price || '$0.00',
-                    priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0,
-                    image: product.image || 'https://via.placeholder.com/500',
-                    images: product.images || [],
-                    video: product.video || '',
-                    sizes: product.sizes || [],
-                    colors: product.colors || [],
-                    badge: product.badge || '',
-                    category: product.category || 'Uncategorized'
-                })),
-                categories: [...new Set(data.map(p => p.category))]
-            };
+        // Verificar si data es un array
+        if (!Array.isArray(data)) {
+            throw new Error("La respuesta de la API no es un array");
         }
         
-        return { products: [], categories: [] };
+        // Procesamiento seguro de datos
+        return {
+            products: data.map(product => ({
+                id: product.id || '',
+                name: product.name || 'Producto sin nombre',
+                description: product.description || '',
+                price: `Bs ${(parseFloat(product.price) || 0 * currentExchangeRate).toFixed(2)}`,
+                originalPrice: product.price || '$0.00',
+                priceValue: parseFloat(product.price) || 0,
+                image: product.image || '/assets/placeholder.jpg',
+                images: product.images || [],
+                video: product.video || '',
+                sizes: product.sizes || [],
+                colors: product.colors || [],
+                badge: product.badge || '',
+                category: product.category || 'Sin categoría',
+                stock: product.stock || 0,
+                min_order: product.min_order || 1
+            })),
+            categories: [...new Set(data.map(p => p.category || '').filter(Boolean))]
+        };
         
     } catch (error) {
         console.error("Error loading products:", error);
+        // Mostrar error en la interfaz
+        document.getElementById('catalog').innerHTML = `
+            <div class="error-message">
+                Error al cargar productos: ${error.message}
+            </div>
+        `;
         return { products: [], categories: [] };
     }
 }
