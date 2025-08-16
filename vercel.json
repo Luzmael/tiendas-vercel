@@ -2,37 +2,64 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.js",
+      "src": "api/products.js",
       "use": "@vercel/node"
     },
     {
-      "src": "tiendas/**/index.html",
+      "src": "api/settings.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/whatsapp.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "tiendas/**/public/index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/assets/(.*)",
-      "dest": "/tiendas/tienda1/public/assets/$1",
+      "dest": "/tiendas/$1/public/assets/$2",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     },
     {
       "src": "/api/products",
-      "dest": "/api/products.js"
+      "dest": "/api/products.js",
+      "headers": {
+        "Cache-Control": "public, s-maxage=604800",
+        "Content-Type": "application/json"
+      }
     },
     {
       "src": "/api/whatsapp",
-      "dest": "/api/whatsapp.js"
+      "dest": "/api/whatsapp.js",
+      "headers": {
+        "Cache-Control": "no-store",
+        "Content-Type": "application/json"
+      }
     },
     {
       "src": "/api/settings",
-      "dest": "/api/settings.js"
+      "dest": "/api/settings.js",
+      "headers": {
+        "Cache-Control": "public, s-maxage=3600",
+        "Content-Type": "application/json"
+      }
     },
     {
       "src": "/(.*)",
-      "dest": "/tiendas/tienda1/public/index.html"
+      "dest": "/tiendas/tienda1/public/index.html",
+      "headers": {
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    {
+      "src": "/tiendas/(?<store>[^/]+)/(.*)",
+      "dest": "/tiendas/$store/public/index.html"
     }
   ],
   "env": {
