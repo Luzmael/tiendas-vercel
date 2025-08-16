@@ -1,6 +1,5 @@
 export default async (request) => {
   try {
-    // 1. Obtener variables de entorno de Vercel
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
@@ -8,17 +7,17 @@ export default async (request) => {
       throw new Error("Missing Supabase environment variables");
     }
 
-    // 2. Fetch a Supabase
     const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
       headers: {
         'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
       return new Response(JSON.stringify({ 
-        error: `Error en Supabase: ${response.statusText}` 
+        error: `Supabase error: ${response.statusText}` 
       }), { 
         status: response.status 
       });
@@ -26,28 +25,36 @@ export default async (request) => {
 
     const data = await response.json();
 
-    // 3. Procesar URLs de imágenes
-    const processedData = data.map(item => ({
-      ...item,
-      image: item.image?.startsWith('http') 
-        ? item.image 
-        : `/assets/productos/${item.image}`,
-      images: item.images?.map(img => 
-        img.startsWith('http') ? img : `/assets/productos/${img}`
-      ) || []
-    }));
+    const processedData = data.map(item => {
+      const safeImage = typeof item.image === 'string' 
+        ? (item.image.startsWith('http') ? item.image : `/assets/productos/${item.image}`)
+        : '/assets/productos/default.jpg';
 
-    // 4. Devolver respuesta con caché
+      const safeImages = Array.isArray(item.images) 
+        ? item.images.map(img => 
+            typeof img === 'string' 
+              ? (img.startsWith('http') ? img : `/assets/productos/${img}`)
+              : '/assets/productos/default.jpg'
+          )
+        : [];
+
+      return {
+        ...item,
+        image: safeImage,
+        images: safeImages
+      };
+    });
+
     return new Response(JSON.stringify(processedData), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=604800' // 1 semana
+        'Cache-Control': 'public, s-maxage=604800'
       }
     });
 
   } catch (error) {
     return new Response(JSON.stringify({ 
-      error: `Error interno: ${error.message}` 
+      error: `Internal error: ${error.message}` 
     }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
