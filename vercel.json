@@ -52,18 +52,16 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/tiendas/tienda1/public/index.html",
-      "headers": {
-        "Cache-Control": "public, max-age=3600"
-      }
+      "dest": "/tiendas/default/public/index.html"
     },
     {
       "src": "/tiendas/(?<store>[^/]+)/(.*)",
-      "dest": "/tiendas/$store/public/index.html"
+      "dest": "/tiendas/$store/public/$2"
     }
   ],
   "env": {
     "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_KEY": "@supabase_key"
+    "SUPABASE_KEY": "@supabase_key",
+    "DEFAULT_STORE": "tienda1"
   }
 }
